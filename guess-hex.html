@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guess the HEX Code</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    .color-display {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .color-box {
+      width: 100px;
+      height: 100px;
+      border-radius: 10px;
+      border: 2px solid #333;
+    }
+    .guess-row {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 5px;
+    }
+    .guess-box {
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      text-align: center;
+      margin: 2px;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+    }
+    .feedback-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 25px;
+      margin-bottom: 10px;
+    }
+    .feedback {
+      font-size: 20px;
+    }
+    .up { color: blue; }
+    .down { color: blue; }
+    .correct { color: green; }
+    .score {
+      font-size: 20px;
+      font-weight: bold;
+      margin: 10px;
+    }
+    .message {
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .back-btn {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #333;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  margin-bottom: 20px; /* add this for spacing */
+}
+
+.styled-btn, #difficulty {
+  padding: 10px 20px;
+  margin: 5px;
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+  </style>
+</head>
+<body>
+  <h1>Guess the HEX Code</h1>
+  <div style="margin: 10px 0;">
+    <label for="difficulty">Difficulty:</label>
+    <select id="difficulty" class="styled-btn">
+      <option value="medium" selected>Medium</option>
+      <option value="easy">Easy</option>
+      <option value="hard">Hard</option>
+    </select>
+    <button onclick="restartGame()" class="styled-btn">Restart</button>
+  </div>
+  
+  <a href="index.html" class="back-btn">Back to Menu</a>
+  
+  <div class="color-display">
+    <div id="colorBox" class="color-box"></div>
+    <div id="guessColorBox" class="color-box"></div>
+  </div>
+
+  <div id="guesses"></div>
+
+  <label><input type="checkbox" id="soundToggle" checked> Sound</label>
+
+  <div class="score">Score: <span id="score">0</span></div>
+  <div class="message" id="message"></div>
+
+  <audio id="correctSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+  <audio id="wrongSound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio>
+
+  <script>
+    const colorBox = document.getElementById("colorBox");
+    const guessColorBox = document.getElementById("guessColorBox");
+    const guesses = document.getElementById("guesses");
+    const message = document.getElementById("message");
+    const scoreDisplay = document.getElementById("score");
+    const soundToggle = document.getElementById("soundToggle");
+    const correctSound = document.getElementById("correctSound");
+    const wrongSound = document.getElementById("wrongSound");
+
+    let answer = "";
+    let currentAttempt = 0;
+    const maxAttempts = 5;
+    let isGameOver = false;
+    let totalScore = 0;
+
+    function generateHexColor() {
+      let color = "#";
+      const hex = "0123456789ABCDEF";
+      for (let i = 0; i < 6; i++) {
+        color += hex[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    function startGame() {
+      answer = generateHexColor();
+      colorBox.style.backgroundColor = answer;
+      guessColorBox.style.backgroundColor = "#FFFFFF";
+      guesses.innerHTML = "";
+      message.textContent = "";
+      currentAttempt = 0;
+      isGameOver = false;
+
+      for (let i = 0; i < maxAttempts; i++) {
+        const row = document.createElement("div");
+        row.className = "guess-row";
+        row.id = `row-${i}`;
+
+        for (let j = 0; j < 6; j++) {
+          const input = document.createElement("input");
+          input.className = "guess-box";
+          input.maxLength = 1;
+          input.dataset.index = j;
+          input.disabled = i !== 0;
+
+          input.addEventListener("input", (e) => {
+            const next = input.nextElementSibling;
+            if (next && e.inputType !== "deleteContentBackward") {
+              next.focus();
+            }
+          });
+
+          row.appendChild(input);
+        }
+
+        row.addEventListener("keyup", (e) => {
+          if (e.key === "Enter") {
+            const filled = [...row.querySelectorAll("input")].every(input => input.value);
+            if (filled) submitGuess();
+          }
+        });
+
+        guesses.appendChild(row);
+
+        const feedbackRow = document.createElement("div");
+        feedbackRow.className = "feedback-row";
+        feedbackRow.id = `feedback-${i}`;
+        guesses.appendChild(feedbackRow);
+      }
+    }
+
+    function submitGuess() {
+      if (isGameOver) return;
+
+      const row = document.getElementById(`row-${currentAttempt}`);
+      const inputs = row.querySelectorAll("input");
+      let guess = "";
+      inputs.forEach(input => guess += input.value.toUpperCase());
+      if (guess.length !== 6 || /[^0-9A-F]/.test(guess)) return;
+
+      const feedbackRow = document.getElementById(`feedback-${currentAttempt}`);
+      feedbackRow.innerHTML = "";
+
+      let isCorrect = true;
+      for (let i = 0; i < 6; i++) {
+        const g = parseInt(guess[i], 16);
+        const a = parseInt(answer[i + 1], 16);
+        const span = document.createElement("span");
+        span.className = "feedback";
+        if (g === a) {
+          span.textContent = "✔️";
+          span.classList.add("correct");
+        } else {
+          isCorrect = false;
+          const diff = Math.abs(g - a);
+          const difficulty = document.getElementById("difficulty").value;
+
+          if (difficulty === "easy") {
+            if (diff <= 2) {
+              span.textContent = g > a ? "🔽" : "🔼";
+            } else {
+              span.textContent = g > a ? "⏬️" : "⏫️";
+            }
+          } else if (difficulty === "medium") {
+            span.textContent = g > a ? "🔽" : "🔼";
+          } else if (difficulty === "hard") {
+            span.textContent = "❌";
+          }
+
+          span.classList.add(g > a ? "down" : "up");
+        }
+        feedbackRow.appendChild(span);
+      }
+
+      guessColorBox.style.backgroundColor = `#${guess}`;
+
+      if (isCorrect) {
+        const scoreForThis = 5 - currentAttempt;
+        totalScore += scoreForThis;
+        scoreDisplay.textContent = totalScore;
+        message.innerHTML = `🎉 Correct! The color was <strong>${answer}</strong>`;
+        if (soundToggle.checked) correctSound.play();
+        isGameOver = true;
+        disableInputs();
+      } else {
+        if (soundToggle.checked) wrongSound.play();
+        currentAttempt++;
+        if (currentAttempt === maxAttempts) {
+          message.innerHTML = `❌ Better luck next time! The color was <strong>${answer}</strong>`;
+          isGameOver = true;
+        } else {
+          const nextRow = document.getElementById(`row-${currentAttempt}`);
+          nextRow.querySelectorAll("input").forEach(input => input.disabled = false);
+        }
+      }
+    }
+
+    function disableInputs() {
+      document.querySelectorAll("input.guess-box").forEach(i => i.disabled = true);
+    }
+
+    function restartGame() {
+      startGame();
+    }
+
+    startGame();
+  </script>
+</body>
+</html>

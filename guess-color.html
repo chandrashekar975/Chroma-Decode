@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guess the Color</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    #mode-select {
+      margin-bottom: 20px;
+    }
+    #hex-question {
+      font-weight: bold;
+      font-size: 1.5em;
+    }
+    #color-options {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    .color-choice-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .color-choice {
+      width: 100px;
+      height: 100px;
+      border-radius: 15px;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
+    }
+    .color-choice:hover {
+      transform: scale(1.1);
+    }
+    .back-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #333;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+    }
+    #result, #score-board, #timer {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Guess the Color</h1>
+  <div id="mode-select">
+    <label for="mode">Select Difficulty:</label>
+    <select id="mode">
+      <option value="easy">Easy</option>
+      <option value="medium">Medium</option>
+      <option value="hard">Hard</option>
+    </select>
+    <button onclick="generateGame()">Start</button>
+  </div>
+  <p>Hex Code: <span id="hex-question"></span></p>
+  <div id="color-options"></div>
+  <div id="result"></div>
+  <div id="score-board">Score: <span id="score">0</span></div>
+  <div id="timer"></div>
+  <a href="index.html" class="back-btn">Back to Menu</a>
+
+  <script>
+    const hexQuestion = document.getElementById("hex-question");
+    const colorOptions = document.getElementById("color-options");
+    const result = document.getElementById("result");
+    const scoreBoard = document.getElementById("score");
+    const timerDisplay = document.getElementById("timer");
+    const modeSelect = document.getElementById("mode");
+
+    let correctColor = "";
+    let score = 0;
+    let timeoutHandle;
+    let countdownHandle;
+
+    function getRandomHex() {
+      return "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+    }
+
+    function generateSimilarColor(base, difference) {
+      let r = parseInt(base.substring(1, 3), 16);
+      let g = parseInt(base.substring(3, 5), 16);
+      let b = parseInt(base.substring(5, 7), 16);
+      r = Math.max(0, Math.min(255, r + Math.floor(Math.random() * difference * 2 - difference)));
+      g = Math.max(0, Math.min(255, g + Math.floor(Math.random() * difference * 2 - difference)));
+      b = Math.max(0, Math.min(255, b + Math.floor(Math.random() * difference * 2 - difference)));
+      return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function startTimer(callback) {
+      let seconds = 5;
+      timerDisplay.textContent = `Next round in ${seconds}s`;
+      countdownHandle = setInterval(() => {
+        seconds--;
+        if (seconds > 0) {
+          timerDisplay.textContent = `Next round in ${seconds}s`;
+        } else {
+          clearInterval(countdownHandle);
+          timerDisplay.textContent = "";
+          callback();
+        }
+      }, 1000);
+    }
+
+    function generateGame() {
+      clearTimeout(timeoutHandle);
+      clearInterval(countdownHandle);
+      timerDisplay.textContent = "";
+      colorOptions.innerHTML = "";
+      result.textContent = "";
+
+      const mode = modeSelect.value;
+      let diff = 80;
+      if (mode === "medium") diff = 40;
+      else if (mode === "hard") diff = 20;
+
+      correctColor = getRandomHex();
+      hexQuestion.textContent = correctColor;
+
+      const choices = [correctColor];
+      while (choices.length < 4) {
+        const newColor = generateSimilarColor(correctColor, diff);
+        if (!choices.includes(newColor)) choices.push(newColor);
+      }
+
+      const labels = ['A', 'B', 'C', 'D'];
+      shuffle(choices).forEach((color, index) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "color-choice-wrapper";
+
+        const div = document.createElement("div");
+        div.className = "color-choice";
+        div.style.backgroundColor = color;
+
+        const label = document.createElement("div");
+        label.textContent = `${labels[index]}`;
+        label.style.fontWeight = 'bold';
+
+        const hexText = document.createElement("div");
+        hexText.textContent = "";
+        hexText.style.fontSize = "0.9em";
+
+        div.onclick = () => {
+          if (color === correctColor) {
+            result.textContent = "🎉 Correct!";
+            score += 1;
+            scoreBoard.textContent = score;
+          } else {
+            result.textContent = `❌ Wrong! The correct color was ${correctColor}`;
+          }
+          // Show hex code for all options
+          Array.from(document.querySelectorAll('.color-choice-wrapper')).forEach((wrap, i) => {
+            const code = wrap.querySelector('.color-choice').style.backgroundColor;
+            const hexCode = choices[i];
+            wrap.querySelector('div:nth-child(3)').textContent = hexCode;
+          });
+          startTimer(generateGame);
+        };
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(div);
+        wrapper.appendChild(hexText);
+        colorOptions.appendChild(wrapper);
+      });
+    }
+  </script>
+</body>
+</html>

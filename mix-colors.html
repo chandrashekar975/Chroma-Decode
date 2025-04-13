@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Color Mixing Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #e3f2fd;
+      padding: 20px;
+      text-align: center;
+      overflow: hidden;
+    }
+    canvas#particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+    .color-box {
+      width: 60px;
+      height: 60px;
+      border: 2px solid #000;
+      border-radius: 10px;
+      display: inline-block;
+      margin: 10px;
+      cursor: grab;
+    }
+    #mixing-area {
+      margin: 20px auto;
+      min-height: 80px;
+      border: 2px dashed #888;
+      border-radius: 10px;
+      padding: 10px;
+      width: 300px;
+      background: #fff;
+      position: relative;
+    }
+    #mixing-placeholder {
+      color: #aaa;
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .chip {
+      width: 30px;
+      height: 30px;
+      display: inline-block;
+      margin: 3px;
+      border-radius: 6px;
+      border: 1px solid #333;
+    }
+    #target-color, #result-color {
+      width: 80px;
+      height: 80px;
+      margin: 10px;
+      display: inline-block;
+      border: 2px solid #000;
+      border-radius: 10px;
+    }
+    .controls {
+      margin-top: 20px;
+    }
+    .score-box {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .back-btn, .controls button {
+      display: inline-block;
+      margin: 10px 5px;
+      padding: 10px 20px;
+      background-color: #333;
+      color: white;
+      text-decoration: none;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .back-btn:hover, .controls button:hover {
+      background-color: #222;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="particles"></canvas>
+
+  <h1>🎨 Color Mixing Game</h1>
+  <a href="index.html" class="back-btn">Back to Menu</a>
+
+  <p>Try to match the target color by mixing primary colors!</p>
+
+  <div>
+    <strong>Target:</strong> <div id="target-color"></div>
+    <strong>Your Mix:</strong> <div id="result-color"></div>
+  </div>
+
+  <div id="mixing-area">
+    <span id="mixing-placeholder">Drop colors here</span>
+  </div>
+
+  <div id="base-colors">
+    <div id="red" class="color-box draggable" style="background:red;" draggable="true"></div>
+    <div id="blue" class="color-box draggable" style="background:blue;" draggable="true"></div>
+    <div id="yellow" class="color-box draggable" style="background:yellow;" draggable="true"></div>
+    <div id="white" class="color-box draggable" style="background:white; border: 2px solid #000;" draggable="true"></div>
+    <div id="black" class="color-box draggable" style="background:black;" draggable="true"></div>
+  </div>
+
+  <div class="controls">
+    <button id="undo-btn">Undo Last Color</button>
+    <button id="new-btn">New Target</button>
+    <button id="giveup-btn">Give Up</button>
+    <button id="hint-btn">Hint</button>
+  </div>
+
+  <p id="feedback"></p>
+  <p id="accuracy"></p>
+  <p id="hint-output"></p>
+  <p class="score-box">Total Score: <span id="score">0</span></p>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const targetColorDiv = document.getElementById("target-color");
+      const resultColorDiv = document.getElementById("result-color");
+      const mixingArea = document.getElementById("mixing-area");
+      const feedback = document.getElementById("feedback");
+      const accuracy = document.getElementById("accuracy");
+      const hintOutput = document.getElementById("hint-output");
+      const scoreDisplay = document.getElementById("score");
+
+      const baseColors = {
+        red: [255, 0, 0],
+        blue: [0, 0, 255],
+        yellow: [255, 255, 0],
+        white: [255, 255, 255],
+        black: [0, 0, 0]
+      };
+
+      let targetRGB = randomColor();
+      let drops = [];
+      let chips = [];
+      let score = 0;
+      let lastPoints = 0;
+      let hintUsed = false;
+
+      function randomColor() {
+        return [Math.random()*256|0, Math.random()*256|0, Math.random()*256|0];
+      }
+
+      function setColorBox(div, rgb) {
+        div.style.backgroundColor = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+      }
+
+      function calculateMixedColor(colors) {
+        const total = colors.length;
+        const sum = colors.reduce((acc, c) => [acc[0]+c[0], acc[1]+c[1], acc[2]+c[2]], [0,0,0]);
+        return sum.map(v => Math.round(v / total));
+      }
+
+      function updateResult() {
+        if (drops.length === 0) {
+          resultColorDiv.style.backgroundColor = "#ffffff";
+          feedback.textContent = "";
+          accuracy.textContent = "";
+          return;
+        }
+        const mixedRGB = calculateMixedColor(drops);
+        setColorBox(resultColorDiv, mixedRGB);
+        const diff = Math.abs(targetRGB[0] - mixedRGB[0]) + Math.abs(targetRGB[1] - mixedRGB[1]) + Math.abs(targetRGB[2] - mixedRGB[2]);
+
+        let points = 0;
+        if (diff <= 2) {
+          accuracy.textContent = "Match Accuracy: 100%";
+          feedback.textContent = "💯 Perfect Match! +10pts";
+          points = 10;
+        } else {
+          const percent = Math.round((1 - diff/765) * 100);
+          accuracy.textContent = `Match Accuracy: ${percent}%`;
+          if (percent > 90) { feedback.textContent = "😊 Very Close! +7pts"; points = 7; }
+          else if (percent > 75) { feedback.textContent = "😐 Close-ish. +5pts"; points = 5; }
+          else { feedback.textContent = "😟 Far off. Try tweaking it!"; }
+        }
+
+        lastPoints = points;
+        score += points;
+        scoreDisplay.textContent = score;
+      }
+
+      function undoLast() {
+        if (score === 0) return feedback.textContent = "❌ Cannot undo at 0 score!";
+        if (drops.length > 0) {
+          drops.pop();
+          const chip = chips.pop();
+          mixingArea.removeChild(chip);
+          score -= lastPoints;
+          score = Math.max(score, 0);
+          feedback.textContent = "↩️ Undo used.";
+          scoreDisplay.textContent = score;
+          updateResult();
+        }
+      }
+
+      function startNewRound() {
+        drops = [];
+        chips = [];
+        hintUsed = false;
+        targetRGB = randomColor();
+        setColorBox(targetColorDiv, targetRGB);
+        resultColorDiv.style.backgroundColor = "#ffffff";
+        feedback.textContent = "";
+        accuracy.textContent = "";
+        hintOutput.textContent = "";
+        mixingArea.innerHTML = "<span id='mixing-placeholder'>Drop colors here</span>";
+      }
+
+      function revealAnswer() {
+        feedback.textContent = "❌ You gave up! Skipping round in 5s...";
+        setTimeout(startNewRound, 5000);
+      }
+
+      function giveHint() {
+        if (hintUsed) return feedback.textContent = "⚠️ Hint already used!";
+        if (score <= 0) return feedback.textContent = "❌ Cannot use hint at 0 score!";
+        const sorted = Object.entries(baseColors).map(([name, rgb]) => {
+          const diff = Math.abs(targetRGB[0]-rgb[0]) + Math.abs(targetRGB[1]-rgb[1]) + Math.abs(targetRGB[2]-rgb[2]);
+          return { name, diff };
+        }).sort((a,b) => a.diff-b.diff);
+        const closest = sorted.slice(0,2).map(x=>x.name);
+        hintOutput.textContent = `💡 Try using: ${closest.join(" + ")}`;
+        score = Math.max(0, score - 3);
+        scoreDisplay.textContent = score;
+        feedback.textContent = "💡 Hint used. -3pts";
+        hintUsed = true;
+      }
+
+      document.querySelectorAll('.draggable').forEach(elem => {
+        elem.addEventListener('dragstart', e => {
+          e.dataTransfer.setData("text/plain", elem.id);
+        });
+      });
+
+      mixingArea.addEventListener('dragover', e => e.preventDefault());
+      mixingArea.addEventListener('drop', e => {
+        e.preventDefault();
+        const id = e.dataTransfer.getData("text/plain");
+        const rgb = baseColors[id];
+        if (rgb && drops.length < 5) {
+          drops.push(rgb);
+          const chip = document.createElement("div");
+          chip.className = "chip";
+          chip.style.backgroundColor = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+          chip.style.border = "1px solid #333";
+          mixingArea.appendChild(chip);
+          chips.push(chip);
+          updateResult();
+        } else {
+          feedback.textContent = "🚫 Max 5 colors allowed!";
+        }
+      });
+
+      document.getElementById("undo-btn").addEventListener("click", undoLast);
+      document.getElementById("new-btn").addEventListener("click", startNewRound);
+      document.getElementById("giveup-btn").addEventListener("click", revealAnswer);
+      document.getElementById("hint-btn").addEventListener("click", giveHint);
+      startNewRound();
+    });
+
+    // Simple animated particles
+    const canvas = document.getElementById("particles");
+    const ctx = canvas.getContext("2d");
+    let w = canvas.width = window.innerWidth;
+    let h = canvas.height = window.innerHeight;
+    const balls = Array.from({length: 25}, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 6 + 3,
+      dx: (Math.random() - 0.5) * 1.5,
+      dy: (Math.random() - 0.5) * 1.5,
+      c: `hsl(${Math.random() * 360}, 100%, 75%)`
+    }));
+
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+      for (let b of balls) {
+        ctx.beginPath();
+        ctx.fillStyle = b.c;
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fill();
+        b.x += b.dx;
+        b.y += b.dy;
+        if (b.x < 0 || b.x > w) b.dx *= -1;
+        if (b.y < 0 || b.y > h) b.dy *= -1;
+      }
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+    window.addEventListener("resize", () => {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
