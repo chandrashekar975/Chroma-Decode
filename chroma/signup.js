@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => { // Make the function
                 email: email,
                 password: password,
                 options: {
-                    emailRedirectTo: 'http://127.0.0.1:5500/chroma/complete-profile.html',
+                    emailRedirectTo: 'https://chroma-decode.vercel.app/chroma/complete-profile.html',
                   },
             });
             console.log('Supabase response received.');
