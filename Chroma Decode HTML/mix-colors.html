@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mix Colors - Freeplay</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* Basic Reset and Body Styling */
+    body {
+      font-family: 'Inter', sans-serif;
+      text-align: center;
+      background: linear-gradient(to bottom right, #8360c3, #2ebf91); /* Another gradient option */
+      color: #e0e0e0; /* Light text color */
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Main Container */
+    .mode-container { /* Using mode-container for distinction */
+      background-color: rgba(255, 255, 255, 0.9); /* More opaque white */
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      max-width: 600px;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header Styling */
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    /* Auth Info (Top Right) */
+    .auth-info {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      color: #333;
+      font-size: 1rem;
+      z-index: 2;
+    }
+
+    .auth-info strong {
+        font-weight: bold;
+    }
+
+    /* Sign Out Button Styling */
+    #signout-button {
+      padding: 8px 15px;
+      background-color: #dc3545; /* Bootstrap danger red */
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #signout-button:hover {
+      background-color: #c82333;
+    }
+
+    /* Back Button */
+    .back-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #6c757d; /* Bootstrap secondary grey */
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background-color 0.3s ease;
+    }
+     .back-btn:hover {
+      background-color: #5a6268;
+    }
+
+    /* Color Display Box */
+    #mixed-color-box {
+        width: 150px; /* Larger color box */
+        height: 150px;
+        border-radius: 15px;
+        border: 4px solid #ffffff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        margin-bottom: 20px;
+        background-color: #000000; /* Initial color */
+    }
+
+    /* HEX Code Display */
+    #hex-code-display {
+        font-size: 1.8em;
+        font-weight: bold;
+        color: #007bff; /* Blue color for hex code */
+        margin-bottom: 30px;
+    }
+
+    /* Sliders Container */
+    .sliders-container {
+        width: 90%;
+        max-width: 400px;
+        margin-bottom: 20px;
+    }
+
+    .slider-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .slider-group label {
+        font-size: 1.1em;
+        font-weight: bold;
+        width: 40px; /* Fixed width for labels */
+        text-align: right;
+    }
+
+    .slider-group input[type="range"] {
+        flex-grow: 1; /* Slider takes available space */
+        -webkit-appearance: none;
+        appearance: none;
+        height: 10px;
+        border-radius: 5px;
+        outline: none;
+        transition: opacity .2s;
+    }
+
+    /* Custom Slider Track Styles */
+    .slider-group input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 10px;
+        cursor: pointer;
+        background: #ddd; /* Default track color */
+        border-radius: 5px;
+    }
+    .slider-group input[type="range"]::-moz-range-track {
+        width: 100%;
+        height: 10px;
+        cursor: pointer;
+        background: #ddd;
+        border-radius: 5px;
+    }
+
+    /* Custom Slider Thumb Styles */
+    .slider-group input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #007bff; /* Default thumb color */
+        cursor: pointer;
+        margin-top: -5px; /* Center thumb vertically */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+     .slider-group input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #007bff;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    /* Specific Slider Colors */
+    .slider-group.red input[type="range"]::-webkit-slider-runnable-track { background: linear-gradient(to right, #ddd, #ff0000); }
+    .slider-group.red input[type="range"]::-moz-range-track { background: linear-gradient(to right, #ddd, #ff0000); }
+    .slider-group.red input[type="range"]::-webkit-slider-thumb { background: #ff0000; }
+    .slider-group.red input[type="range"]::-moz-range-thumb { background: #ff0000; }
+
+    .slider-group.green input[type="range"]::-webkit-slider-runnable-track { background: linear-gradient(to right, #ddd, #00ff00); }
+    .slider-group.green input[type="range"]::-moz-range-track { background: linear-gradient(to right, #ddd, #00ff00); }
+    .slider-group.green input[type="range"]::-webkit-slider-thumb { background: #00ff00; }
+    .slider-group.green input[type="range"]::-moz-range-thumb { background: #00ff00; }
+
+    .slider-group.blue input[type="range"]::-webkit-slider-runnable-track { background: linear-gradient(to right, #ddd, #0000ff); }
+    .slider-group.blue input[type="range"]::-moz-range-track { background: linear-gradient(to right, #ddd, #0000ff); }
+    .slider-group.blue input[type="range"]::-webkit-slider-thumb { background: #0000ff; }
+    .slider-group.blue input[type="range"]::-moz-range-thumb { background: #0000ff; }
+
+
+    /* Game Area Disabled State (if needed for initial loading) */
+    #mode-area { /* Using mode-area for distinction */
+       /* opacity and pointer-events handled by JS */
+       transition: opacity 0.5s ease;
+       width: 100%;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 480px) {
+        .mode-container {
+            padding: 20px;
+        }
+        .auth-info {
+            position: static;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-direction: column;
+            gap: 10px;
+        }
+         .sliders-container {
+             width: 100%;
+         }
+         .slider-group label {
+             width: 30px; /* Adjust label width */
+             font-size: 1em;
+         }
+          #mixed-color-box {
+              width: 100px;
+              height: 100px;
+          }
+           #hex-code-display {
+               font-size: 1.5em;
+           }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="auth-info">
+      <p>Signed in as: <strong id="user-email">Loading...</strong></p>
+      <button id="signout-button">Sign Out</button>
+  </div>
+
+
+  <div class="mode-container">
+    <h1>Mix Colors</h1>
+
+    <div id="mode-area">
+
+        <div id="mixed-color-box"></div>
+        <div id="hex-code-display">#000000</div>
+
+        <div class="sliders-container">
+            <div class="slider-group red">
+                <label for="red-slider">R</label>
+                <input type="range" id="red-slider" min="0" max="255" value="0">
+            </div>
+            <div class="slider-group green">
+                <label for="green-slider">G</label>
+                <input type="range" id="green-slider" min="0" max="255" value="0">
+            </div>
+            <div class="slider-group blue">
+                <label for="blue-slider">B</label>
+                <input type="range" id="blue-slider" min="0" max="255" value="0">
+            </div>
+        </div>
+
+        <a href="home.html" class="back-btn">Back to Menu</a>
+
+    </div> </div> <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="mix-colors.js"></script>
+
+</body>
+</html>
