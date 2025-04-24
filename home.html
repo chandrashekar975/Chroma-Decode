@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Color Code Puzzle Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Basic Reset and Body Styling */
+        body {
+            font-family: 'Inter', sans-serif; /* Use Inter font */
+            text-align: center;
+            /* Gradient Background */
+            background:  rgba(255, 255, 255, 0.9) ; /* Light purple/pink gradient */
+            color: #333; /* Dark text color */
+            margin: 0;
+            padding: 0; /* Remove body padding to allow full background */
+            min-height: 100vh; /* Full viewport height */
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center content horizontally */
+            position: relative; /* Needed for absolute positioning */
+            overflow: hidden; /* Prevent scrollbars */
+        }
+
+        .background-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Cover the entire viewport */
+            z-index: -2; /* Place it behind other content */
+        }
+
+        /* Auth Info (Top Right) */
+        .auth-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #333; /* Dark text on light background */
+            font-size: 1rem;
+            z-index: 2; /* Ensure it's on top */
+        }
+
+        .auth-info strong {
+            font-weight: bold;
+        }
+
+        /* Sign Out Button Styling */
+        #signout-button {
+            padding: 8px 15px;
+            background-color: #dc3545; /* Bootstrap danger red */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #signout-button:hover {
+            background-color: #c82333;
+        }
+
+        /* Main Menu Container */
+        .menu-container {
+            background: linear-gradient(to bottom right, #d8d7dc, #a4df87); /* Semi-transparent white background */
+            border-radius: 15px;
+            padding: 40px 30px; /* Adjust padding */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Soft shadow */
+            max-width: 700px; /* Max width for the menu */
+            width: 100%; /* Full width on smaller screens */
+            box-sizing: border-box; /* Include padding in width */
+            margin-top: 80px; /* Space from top (considering auth info) */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative; /* Ensure it's above background */
+            z-index: 1;
+        }
+
+
+        h1 {
+            font-size: 2.5rem; /* Adjusted font size */
+            margin-bottom: 15px; /* Adjusted margin */
+            color: #333; /* Dark color */
+        }
+
+        .description {
+            font-size: 1.1rem; /* Adjusted font size */
+            color: #555; /* Slightly lighter dark color */
+            margin-bottom: 30px; /* Adjusted margin */
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* Adjusted gap */
+            width: 100%; /* Take full width of container */
+            margin-bottom: 30px; /* Space below menu buttons */
+        }
+
+        .menu-btn {
+            text-decoration: none;
+            background-color: #007bff; /* Bootstrap primary blue */
+            color: white;
+            padding: 15px;
+            font-size: 1.1rem; /* Adjusted font size */
+            border-radius: 8px; /* Adjusted border-radius */
+            transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* Added shadow */
+            position: relative;
+            overflow: hidden; /* Hide overflow for hover effect */
+        }
+
+        .menu-btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px); /* More pronounced hover effect */
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+         .menu-btn:active {
+             transform: translateY(0);
+             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Tooltip Styling (Adjusted for new look) */
+        .menu-btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%; /* Position above the button */
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8); /* Darker background */
+            color: #fff;
+            padding: 8px 12px; /* Adjusted padding */
+            border-radius: 6px; /* More rounded */
+            font-size: 0.9rem; /* Adjusted font size */
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, bottom 0.3s ease; /* Animate bottom position */
+            z-index: 10; /* Ensure tooltip is on top */
+        }
+
+        .menu-btn:hover::after {
+            opacity: 1;
+            bottom: calc(100% + 10px); /* Move up slightly on hover */
+        }
+
+
+        /* Interactive Text/Data Area (Placeholder) */
+        .interactive-area {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.05); /* Slight dark background */
+            border-radius: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: left; /* Align text to left */
+            color: #555; /* Dark text */
+            font-size: 1rem;
+        }
+
+        .interactive-area h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        .interactive-area p {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 500px) {
+            .menu-container {
+                padding: 30px 20px;
+                margin-top: 60px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .description {
+                font-size: 1rem;
+            }
+            .menu-btn {
+                font-size: 1rem;
+                padding: 12px;
+            }
+            .auth-info {
+                position: static; /* Stack on small screens */
+                margin-bottom: 20px;
+                justify-content: center;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .interactive-area {
+                padding: 15px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <video autoplay loop muted plays-inline class="background-video">
+        <source src="1943483-uhd_3840_2160_25fps.mp4" type="video/mp4">
+    </video>
+
+    <div class="auth-info">
+        <p>Signed in as: <strong id="user-email">Loading...</strong></p>
+        <button id="signout-button">Sign Out</button>
+    </div>
+
+    <div class="menu-container">
+        <h1>🎨 Color Code Puzzle Game</h1>
+        <p class="description">Test your color knowledge by guessing hex codes, identifying colors, or mixing your own!</p>
+
+        <div class="menu">
+            <a href="guess-hex.html" class="menu-btn" data-tooltip="See a color and guess its 6-digit HEX code!">🎯 Guess the Hex Code</a>
+            <a href="guess-color.html" class="menu-btn" data-tooltip="See a HEX code and choose the right color from similar options!">🔍 Guess the Color</a>
+            <a href="mix-colors.html" class="menu-btn" data-tooltip="Mix red, green, and blue values to create any color!">🧪 Mix Colors</a>
+        </div>
+
+        <div class="interactive-area">
+            <h3>Welcome!</h3>
+            <p>Dive into the world of colors. Choose a game mode above to start playing and track your progress!</p>
+            </div>
+
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="secure.js"></script>
+</body>
+</html>
