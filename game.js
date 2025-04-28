@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
      // Recalculate Accuracy Percentage based on lifetime stats
     // If you track total correct guesses and total attempts:
-    const lifetimeAccuracy = totalRounds > 0 ? Math.round((correctGuesses / totalRounds) * 100) : 0; // Assuming max score per game is 5
+    const lifetimeAccuracy = totalRounds > 0 ? Math.round((totalScore / (totalRounds * 5)) * 100) : 0;; // Assuming max score per game is 5
      accuracyPercent.textContent = `${lifetimeAccuracy}%`;
 
 
