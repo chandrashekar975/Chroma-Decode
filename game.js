@@ -134,7 +134,8 @@ document.addEventListener('DOMContentLoaded', async () => {
      streakDisplay.textContent = initialCurrentStreak; // Display the streak they had last time
 
      // Recalculate Accuracy Percentage based on lifetime stats
-     const lifetimeAccuracy = totalRounds > 0 ? Math.round((totalScore / (totalRounds * 5)) * 100) : 0; // Assuming max score per game is 5
+    // If you track total correct guesses and total attempts:
+    const lifetimeAccuracy = totalRounds > 0 ? Math.round((correctGuesses / totalRounds) * 100) : 0; // Assuming max score per game is 5
      accuracyPercent.textContent = `${lifetimeAccuracy}%`;
 
 
